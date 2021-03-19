@@ -42,5 +42,29 @@ CHIP ALU {
         ng; // 1 if (out < 0),  0 otherwise
 
     PARTS:
-   // Put you code here:
+
+    // Use the flags for the x input to generate xProcessed
+    Mux16(a=x, b[0..15]=false, sel=zx, out=xZero);
+    Not16(in=xZero, out=notXZero);
+    Mux16(a=xZero, b=notXZero, sel=nx, out=xProcessed);
+
+    // Use the flags for the y input to generate yProcessed
+    Mux16(a=y, b[0..15]=false, sel=zy, out=yZero);
+    Not16(in=yZero, out=notYZero);
+    Mux16(a=yZero, b=notYZero, sel=ny, out=yProcessed);
+
+    // Calculate both results of combining x and y, select the correct one into fOut
+    Add16(a=xProcessed, b=yProcessed, out=xPlusy);
+    And16(a=xProcessed, b=yProcessed, out=xAndy);
+    Mux16(a=xAndy, b=xPlusy, sel=f, out=fOut);
+
+    // Calculate negation of output and select negative flag, output, and split version of output for evaluation of zero
+    Not16(in=fOut, out=notFOut);
+    Mux16(a=fOut, b=notFOut, sel=no, out[15]=ng, out[0..7]=preOut1, out[8..15]=preOut2, out=out);
+
+    // Set the is zero flag
+    Or8Way(in=preOut1, out=zrLsb);
+    Or8Way(in=preOut2, out=zrMsb);
+    Or(a=zrLsb, b=zrMsb, out=nzr);
+    Not(in=nzr, out=zr);
 }
