@@ -16,10 +16,16 @@ CHIP PC {
     OUT out[16];
 
     PARTS:
+    // Increment the last value, select the incremented one if possible
     Inc16(in=lastPC, out=lastPCplusOne);
     Mux16(a=lastPC, b=lastPCplusOne, sel=inc, out=io);
-    Mux16(a=io, b=in, sel=load, out=lo);
-    Mux16(a=lo, b[0..15]=false, sel=reset, out=ro);
-    Register(in=ro, out=lastPC, out=out, load=true);
 
+    // Loading input takes precendence over incremented value
+    Mux16(a=io, b=in, sel=load, out=lo);
+
+    // Reset has highest priority
+    Mux16(a=lo, b[0..15]=false, sel=reset, out=ro);
+
+    // Create that time spacing
+    Register(in=ro, out=lastPC, out=out, load=true);
 }
